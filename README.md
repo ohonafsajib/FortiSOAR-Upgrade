@@ -199,11 +199,8 @@ If failure occurs:
   Phase                         Log File
   ----------------------------- -----------------------------------------------------------------------
   Pre‑Upgrade                   /var/log/leapp/leapp-preupgrade.log
+  
   OS Migration                  /var/log/leapp/leapp-upgrade.log
-  7.6.5 Upgrade                 /var/log/cyops/upgrade-fortisoar-7.6.5-`<timestamp>`{=html}.log
+  
+  7.6.5 Upgrade                 /var/log/cyops/upgrade-fortisoar-7.6.5-*.log
 -----------------------------------------------------------------------------------------------------
-
-------------------------------------------------------------------------
-
-Upgrade Completed By: \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\
-Date: \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
