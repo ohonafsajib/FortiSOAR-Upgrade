@@ -1,4 +1,4 @@
-# FortiSOAR-Upgrade# FortiSOAR Staging Upgrade Runbook  
+# FortiSOAR-Upgrade# FortiSOAR Upgrade Runbook  
 **Upgrade Path:** 7.4.6 → 7.5.0 (OS Migration) → 7.6.5  
 **Environment:** Standalone (Staging)  
 **Type:** In-Place Upgrade  
