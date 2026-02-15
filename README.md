@@ -1,207 +1,212 @@
-# FortiSOAR-Upgrade
-\% FortiSOAR Staging Upgrade Runbook % Version 7.4.6 → 7.6.5 % Generated
-on 2026-02-15
+# FortiSOAR-Upgrade# FortiSOAR Staging Upgrade Runbook  
+**Upgrade Path:** 7.4.6 → 7.5.0 (OS Migration) → 7.6.5  
+**Environment:** Standalone (Staging)  
+**Type:** In-Place Upgrade  
 
-------------------------------------------------------------------------
+---
 
-# 1. Document Overview
+# 1. Overview
 
-This document provides a structured, step‑by‑step upgrade procedure for
-the Staging FortiSOAR instance.
+This document provides a structured and validated upgrade procedure for upgrading FortiSOAR from **7.4.6 to 7.6.5** using the required intermediate version **7.5.0** (which includes OS migration from Rocky Linux 8 to Rocky Linux 9).
 
-**Current Version:** 7.4.6\
-**Target Version:** 7.6.5\
-**Upgrade Path:**\
-7.4.6 → 7.5.0 (OS Migration Included) → 7.6.5
+---
 
-Environment Type: Standalone (Staging)
+# 2. Pre-Upgrade Checklist (Mandatory)
 
-------------------------------------------------------------------------
+Before starting:
 
-# 2. Pre‑Upgrade Checklist
+- [ ] Take full VM snapshot
+- [ ] Stop all scheduled playbooks
+- [ ] Confirm no active workflows are running
+- [ ] Export built-in connectors
+- [ ] Verify internet/repo connectivity
+- [ ] Confirm sufficient disk space
+- [ ] Unmount external NFS mounts (if any)
 
-## 2.1 Mandatory Preparations
+---
 
--   [ ] Take full VM snapshot
--   [ ] Stop all scheduled playbooks
--   [ ] Confirm no active playbooks running
--   [ ] Export built‑in connectors
--   [ ] Verify repository connectivity
--   [ ] Confirm sufficient disk space
--   [ ] Unmount external NFS (if mounted)
+# 3. Phase 1 — Upgrade 7.4.6 → 7.5.0  
+⚠ Includes OS Migration (Rocky Linux 8 → 9)
 
-------------------------------------------------------------------------
-
-# 3. Upgrade 7.4.6 → 7.5.0 (Includes OS Migration)
+---
 
 ## 3.1 Download Upgrade Package
 
-``` bash
+```bash
 cd /
 wget https://repo.fortisoar.fortinet.com/7.5.0/fortisoar-inplace-upgrade-7.5.0.bin
 chmod +x fortisoar-inplace-upgrade-7.5.0.bin
 ```
 
+---
+
 ## 3.2 Execute Upgrade
 
-``` bash
+```bash
 sh fortisoar-inplace-upgrade-7.5.0.bin
 ```
 
-------------------------------------------------------------------------
+---
 
-## 3.3 Reboot Phase
+## 3.3 Reboot & OS Migration Phase
 
-After execution completes, system will prompt:
-
-"A reboot is required to continue the FortiSOAR upgrade"
+After execution, system will prompt for reboot.
 
 During reboot:
 
--   System switches from Rocky Linux 8 → Rocky Linux 9
--   OS migration takes approximately 15--20 minutes
--   FortiSOAR 7.5.0 installation starts automatically
--   Configuration restoration runs automatically
+- OS migrates from Rocky Linux 8 → Rocky Linux 9
+- Migration takes approximately 15–20 minutes
+- FortiSOAR 7.5.0 installs automatically
+- Configuration restores automatically
 
-------------------------------------------------------------------------
+⚠ Do NOT interrupt the process.
 
-## 3.4 Monitoring During 7.5.0 Upgrade
+---
+
+## 3.4 Monitor Upgrade Progress
 
 After SSH access is restored:
 
-``` bash
+```bash
 tail -f /var/log/leapp/leapp-upgrade.log
 ```
 
-Important:
+Additional logs:
 
--   Do NOT execute other CLI commands during upgrade
--   Wait until FortiSOAR installation completes fully
+```
+/var/log/leapp/leapp-preupgrade.log
+/var/log/leapp/leapp-report.json
+/var/log/leapp/leapp-report.txt
+```
 
-Pre-upgrade report locations:
+⚠ Do NOT execute other CLI commands while upgrade is running.
 
-    /var/log/leapp/leapp-preupgrade.log
-    /var/log/leapp/leapp-report.json
-    /var/log/leapp/leapp-report.txt
+---
 
-------------------------------------------------------------------------
+## 3.5 Post-Upgrade Verification (7.5.0)
 
-## 3.5 Post‑Upgrade Verification (7.5.0)
-
-``` bash
+```bash
 cat /etc/redhat-release
 uname -r
 rpm -qi cyops | grep Version
 csadm services --status
 ```
 
-Expected Results:
+Expected:
 
--   Rocky Linux 9.x
--   Kernel 5.14.x.el9
--   FortiSOAR 7.5.0
--   All services running
+- Rocky Linux 9.x
+- Kernel 5.14.x.el9
+- FortiSOAR 7.5.0
+- All services running
 
-------------------------------------------------------------------------
+---
 
 # 4. Stabilization Validation (After 7.5.0)
 
--   [ ] GUI login successful
--   [ ] Playbooks accessible
--   [ ] Manual workflow test executed
--   [ ] All services healthy
--   [ ] No critical errors in logs
+- [ ] GUI login successful
+- [ ] Playbooks accessible
+- [ ] Manual workflow test successful
+- [ ] No HTTP 500 errors
+- [ ] All services healthy
 
-------------------------------------------------------------------------
+---
 
-# 5. Upgrade 7.5.0 → 7.6.5
+# 5. Phase 2 — Upgrade 7.5.0 → 7.6.5
 
-## 5.1 Run Readiness Check
+---
 
-``` bash
+## 5.1 Readiness Check
+
+```bash
 csadm upgrade check-readiness --version 7.6.5
 ```
 
-Readiness report location:
+Report location:
 
-    /opt/fsr-elevate/elevate/outputs/
+```
+/opt/fsr-elevate/elevate/outputs/
+```
 
-------------------------------------------------------------------------
+All checks must pass before proceeding.
+
+---
 
 ## 5.2 Execute Upgrade
 
-``` bash
+```bash
 csadm upgrade execute --target-version 7.6.5
 ```
 
-------------------------------------------------------------------------
+---
 
-## 5.3 Monitor Upgrade Progress
+## 5.3 Monitor Upgrade Logs
 
-Primary Log:
+Primary log:
 
-``` bash
+```bash
 tail -f /var/log/cyops/upgrade-fortisoar-7.6.5-<timestamp>.log
 ```
 
-Elevate Framework Log:
+Elevate framework log:
 
-``` bash
+```bash
 tail -f /var/log/cyops/fsr-elevate/fsr-elevate-7.6.5-<timestamp>.log
 ```
 
-------------------------------------------------------------------------
+---
 
-# 6. Post‑Upgrade Validation (7.6.5)
+# 6. Final Validation (7.6.5)
 
-``` bash
+```bash
 rpm -qi cyops | grep Version
 csadm services --status
 ```
 
 Confirm:
 
--   FortiSOAR Version: 7.6.5
--   All services running
--   No HTTP 500 errors
--   Playbooks execute successfully
--   Background jobs functional
+- FortiSOAR 7.6.5
+- All services running
+- GUI accessible
+- Playbooks execute successfully
+- Background jobs functioning normally
 
-------------------------------------------------------------------------
+---
 
 # 7. Rollback Procedure
 
 If failure occurs:
 
-1.  Power off VM
-2.  Revert to snapshot
-3.  Boot system
-4.  Validate original 7.4.6 environment restored
+1. Power off VM
+2. Revert to pre-upgrade snapshot
+3. Boot system
+4. Validate original 7.4.6 state
 
-------------------------------------------------------------------------
+---
 
-# 8. Activity Tracking Log
+# 8. Activity Tracking Table
 
-  Step               Date   Engineer   Status   Notes
-  ------------------ ------ ---------- -------- -------
-  Snapshot Taken                                
-  7.5.0 Upgrade                                 
-  OS Verified                                   
-  7.6.5 Readiness                               
-  7.6.5 Upgrade                                 
-  Final Validation                              
+| Step | Date | Engineer | Status | Notes |
+|------|------|----------|--------|-------|
+| Snapshot Taken | | | | |
+| 7.5.0 Upgrade | | | | |
+| OS Verified | | | | |
+| 7.6.5 Readiness | | | | |
+| 7.6.5 Upgrade | | | | |
+| Final Validation | | | | |
 
-------------------------------------------------------------------------
+---
 
-# 9. Log File Reference Summary
+# 9. Log Reference Summary
 
-  -----------------------------------------------------------------------------------------------------
-  Phase                         Log File
-  ----------------------------- -----------------------------------------------------------------------
-  Pre‑Upgrade                   /var/log/leapp/leapp-preupgrade.log
+| Phase | Log Location |
+|-------|--------------|
+| Pre-Upgrade | /var/log/leapp/leapp-preupgrade.log |
+| OS Migration | /var/log/leapp/leapp-upgrade.log |
+| 7.6.5 Upgrade | /var/log/cyops/upgrade-fortisoar-7.6.5-<timestamp>.log |
+| Elevate Framework | /var/log/cyops/fsr-elevate/fsr-elevate-7.6.5-<timestamp>.log |
 
-  OS Migration                  /var/log/leapp/leapp-upgrade.log
+---
 
-  7.6.5 Upgrade                 /var/log/cyops/upgrade-fortisoar-7.6.5-`<timestamp>`{=html}.log
+# Upgrade Completion
 
-  -----------------------------------------------------------------------------------------------------
+Document completion date and validation results before closing the change request.
